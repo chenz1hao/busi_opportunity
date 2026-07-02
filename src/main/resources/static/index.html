@@ -11,63 +11,268 @@
   <script src="/vendor/element-plus-icons-vue.iife.js"></script>
   <script src="/vendor/echarts.min.js"></script>
   <style>
+    :root {
+      --primary: #2563eb;
+      --primary-light: #3b82f6;
+      --primary-dark: #1d4ed8;
+      --success: #10b981;
+      --success-light: #d1fae5;
+      --warning: #f59e0b;
+      --warning-light: #fef3c7;
+      --danger: #ef4444;
+      --danger-light: #fee2e2;
+      --info: #6b7280;
+      --sidebar-width: 240px;
+      --header-height: 64px;
+      --bg-body: #f1f5f9;
+      --bg-card: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-tertiary: #94a3b8;
+      --border-color: #e2e8f0;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.06);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,.08);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif; }
-    .app-container { height: 100vh; background: #f0f2f5; }
-    .app-header { display: flex; align-items: center; justify-content: space-between;
-      background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.08); padding: 0 24px; height: 60px; }
-    .header-left { display: flex; align-items: center; gap: 12px; }
-    .header-left h1 { font-size: 20px; color: #303133; font-weight: 600; }
-    .app-main { padding: 20px; min-height: calc(100vh - 60px); }
-    .stat-cards { margin-bottom: 0; }
-    .stat-card { text-align: center; }
-    .stat-value { font-size: 32px; font-weight: 700; color: #303133; margin-bottom: 8px; }
-    .stat-label { font-size: 14px; color: #909399; }
-    .scored .stat-value { color: #67C23A; }
-    .pending .stat-value { color: #E6A23C; }
-    .action .stat-value { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; }
-    .filter-form { margin-bottom: 16px; }
-    .pagination-row { display: flex; justify-content: center; margin-top: 20px; }
-    .detail-header { display: flex; align-items: center; gap: 16px; }
-    .detail-title { font-size: 18px; font-weight: 600; }
-    .content-text { white-space: pre-wrap; line-height: 1.8; color: #303133; max-height: 500px; overflow-y: auto; }
-    .card-title { font-size: 16px; font-weight: 600; }
-    .card-header-row { display: flex; align-items: center; gap: 12px; }
-    .city-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-    .city-tag { margin: 0; }
-    .el-menu--horizontal { border-bottom: none !important; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif;
+      color: var(--text-primary);
+      background: var(--bg-body);
+      -webkit-font-smoothing: antialiased;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+
+    /* ========== 布局 ========== */
+    .app-container { display: flex; height: 100vh; overflow: hidden; }
+
+    .sidebar {
+      width: var(--sidebar-width);
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      display: flex; flex-direction: column;
+      transition: width .3s ease;
+      flex-shrink: 0; z-index: 100;
+    }
+    .sidebar-logo {
+      height: var(--header-height);
+      display: flex; align-items: center; gap: 12px;
+      padding: 0 20px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      flex-shrink: 0;
+    }
+    .sidebar-logo .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 20px; flex-shrink: 0;
+    }
+    .sidebar-logo .logo-text {
+      color: #fff; font-size: 16px; font-weight: 600;
+      white-space: nowrap; letter-spacing: .5px;
+    }
+    .sidebar-menu { flex: 1; padding: 12px 0; overflow-y: auto; }
+    .sidebar-menu .el-menu { background: transparent !important; border: none !important; }
+    .sidebar-menu .el-menu-item {
+      height: 46px !important; line-height: 46px !important;
+      margin: 4px 12px !important; border-radius: var(--radius-sm) !important;
+      color: #94a3b8 !important; font-size: 14px;
+      transition: all .2s !important;
+    }
+    .sidebar-menu .el-menu-item:hover {
+      background: rgba(255,255,255,.06) !important; color: #e2e8f0 !important;
+    }
+    .sidebar-menu .el-menu-item.is-active {
+      background: var(--primary) !important; color: #fff !important;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(37,99,235,.35);
+    }
+    .sidebar-menu .el-menu-item .el-icon { font-size: 18px; }
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      color: #64748b; font-size: 12px;
+    }
+
+    .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .app-header {
+      height: var(--header-height);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px; flex-shrink: 0;
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-title { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .header-time { color: var(--text-tertiary); font-size: 13px; }
+
+    .app-main { flex: 1; padding: 24px 28px; overflow-y: auto; }
+
+    .page-title {
+      font-size: 22px; font-weight: 700; color: var(--text-primary);
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .page-title::before {
+      content: ''; display: block; width: 4px; height: 22px;
+      background: var(--primary); border-radius: 2px;
+    }
+
+    .el-card {
+      border-radius: var(--radius-md) !important;
+      border: 1px solid var(--border-color) !important;
+      box-shadow: var(--shadow-sm) !important;
+      transition: box-shadow .3s, transform .3s !important;
+    }
+    .el-card:hover { box-shadow: var(--shadow-md) !important; }
+    .el-card__header {
+      padding: 16px 20px !important;
+      border-bottom: 1px solid var(--border-color) !important;
+      font-weight: 600; font-size: 15px;
+    }
+    .el-card__body { padding: 20px !important; }
+
+    /* ========== 仪表盘 ========== */
+    .dashboard-stats {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--bg-card); border-radius: var(--radius-md);
+      padding: 24px; border: 1px solid var(--border-color);
+      position: relative; overflow: hidden;
+      transition: transform .25s, box-shadow .25s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+    .stat-card .stat-icon {
+      width: 48px; height: 48px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin-bottom: 16px;
+    }
+    .stat-card .stat-value { font-size: 36px; font-weight: 700; color: var(--text-primary); line-height: 1.2; margin-bottom: 4px; }
+    .stat-card .stat-label { font-size: 14px; color: var(--text-secondary); }
+    .stat-card .stat-trend { font-size: 12px; margin-top: 4px; }
+    .stat-card.card-total .stat-icon { background: #eff6ff; color: var(--primary); }
+    .stat-card.card-total .stat-value { color: var(--primary); }
+    .stat-card.card-scored .stat-icon { background: var(--success-light); color: var(--success); }
+    .stat-card.card-scored .stat-value { color: var(--success); }
+    .stat-card.card-pending .stat-icon { background: var(--warning-light); color: var(--warning); }
+    .stat-card.card-pending .stat-value { color: var(--warning); }
+    .stat-card.card-action { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .stat-card.card-action .action-btns { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+    .stat-card.card-action .stat-label { margin-top: 12px; }
+
+    .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .chart-card .chart-wrapper { height: 350px; width: 100%; }
+    .log-table-card .el-card__body { padding: 0 !important; }
+
+    /* ========== 线索列表 ========== */
+    .filter-card { margin-bottom: 20px; }
+    .filter-card .el-card__body { padding: 18px 20px !important; }
+    .filter-form .el-form-item { margin-bottom: 0 !important; }
+    .filter-form .el-form-item__label { font-size: 13px; color: var(--text-secondary); }
+
+    .table-card .el-card__body { padding: 0 !important; }
+    .el-table th.el-table__cell { background: #f8fafc !important; color: var(--text-primary) !important; font-weight: 600; font-size: 13px; }
+    .el-table--striped .el-table__body tr.el-table__row--striped td.el-table__cell { background: #f8fafc !important; }
+    .el-table .el-table__body tr:hover > td.el-table__cell { background: #eff6ff !important; }
+    .el-table td.el-table__cell { font-size: 13px; }
+    .el-table .cell { padding: 0 16px !important; }
+    .pagination-row { display: flex; justify-content: center; padding: 20px 0; }
+
+    /* ========== 详情页 ========== */
+    .detail-page .el-card__header { padding: 16px 24px !important; }
+    .el-descriptions__cell.el-descriptions__label { background: #f8fafc !important; font-weight: 500 !important; }
+    .content-box {
+      background: #f8fafc; border-radius: var(--radius-sm);
+      padding: 20px; font-size: 14px; line-height: 1.9;
+      color: var(--text-primary); max-height: 500px; overflow-y: auto;
+      white-space: pre-wrap; border: 1px solid var(--border-color);
+    }
+    .detail-back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: var(--radius-sm);
+      background: #f1f5f9; color: var(--text-secondary); font-size: 13px;
+      cursor: pointer; border: none; transition: all .2s;
+    }
+    .detail-back-btn:hover { background: var(--primary); color: #fff; }
+
+    /* ========== 配置页 ========== */
+    .rules-card .el-card__body, .config-card .el-card__body { padding: 0 !important; }
+    .config-section-hint {
+      margin-top: 16px; padding: 12px 16px;
+      background: #f0f9ff; border-radius: var(--radius-sm);
+      color: #0369a1; font-size: 13px;
+      border-left: 3px solid var(--primary);
+    }
+    .city-tags-container { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 0; }
+
+    /* ========== 通用优化 ========== */
+    .el-button { border-radius: var(--radius-sm) !important; font-weight: 500 !important; }
+    .el-button--primary { box-shadow: 0 2px 8px rgba(37,99,235,.25) !important; }
+    .el-button--primary:hover { box-shadow: 0 4px 12px rgba(37,99,235,.35) !important; }
+    .el-input__wrapper, .el-select .el-input__wrapper { border-radius: var(--radius-sm) !important; }
+    .el-tag { border-radius: 4px !important; }
+    .el-pagination.is-background .el-pager li { border-radius: var(--radius-sm) !important; }
+    .el-dialog { border-radius: var(--radius-lg) !important; overflow: hidden; }
+    .el-dialog__header { background: #f8fafc !important; }
+    .el-message { border-radius: var(--radius-md) !important; box-shadow: var(--shadow-lg) !important; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in-up { animation: fadeInUp .4s ease-out both; }
+    .fade-in-up-1 { animation: fadeInUp .4s ease-out .05s both; }
+    .fade-in-up-2 { animation: fadeInUp .4s ease-out .1s both; }
+    .fade-in-up-3 { animation: fadeInUp .4s ease-out .15s both; }
+    .fade-in-up-4 { animation: fadeInUp .4s ease-out .2s both; }
+
+    @media (max-width: 1200px) {
+      .dashboard-stats { grid-template-columns: repeat(2, 1fr); }
+      .chart-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .app-main { padding: 16px; }
+      .dashboard-stats { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
 <div id="app">
   <div class="app-container">
-    <el-container>
-      <el-header class="app-header">
-        <div class="header-left">
-          <el-icon :size="28"><search /></el-icon>
-          <h1>商机信息抓取与评分系统</h1>
-        </div>
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-icon"><el-icon :size="20"><search /></el-icon></div>
+        <span class="logo-text">商机抓取系统</span>
+      </div>
+      <nav class="sidebar-menu">
+        <el-menu :router="true" :default-active="currentRoute" background-color="transparent" text-color="#94a3b8" active-text-color="#ffffff">
+          <el-menu-item index="/"><el-icon><data-analysis /></el-icon><span>仪表盘</span></el-menu-item>
+          <el-menu-item index="/records"><el-icon><document /></el-icon><span>线索列表</span></el-menu-item>
+          <el-menu-item index="/config"><el-icon><setting /></el-icon><span>系统配置</span></el-menu-item>
+        </el-menu>
+      </nav>
+      <div class="sidebar-footer">v1.0.0 · 商机信息抓取与评分系统</div>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="app-header">
+        <div class="header-left"><span class="header-title">{{ pageTitle }}</span></div>
         <div class="header-right">
-          <el-menu mode="horizontal" :router="true" :default-active="currentRoute">
-            <el-menu-item index="/">
-              <el-icon><data-analysis /></el-icon>
-              <span>仪表盘</span>
-            </el-menu-item>
-            <el-menu-item index="/records">
-              <el-icon><document /></el-icon>
-              <span>线索列表</span>
-            </el-menu-item>
-            <el-menu-item index="/config">
-              <el-icon><setting /></el-icon>
-              <span>系统配置</span>
-            </el-menu-item>
-          </el-menu>
+          <span class="header-time">{{ currentTime }}</span>
+          <el-tooltip content="刷新数据"><el-button circle @click="handleRefresh"><el-icon><refresh /></el-icon></el-button></el-tooltip>
         </div>
-      </el-header>
-      <el-main class="app-main">
-        <router-view />
-      </el-main>
-    </el-container>
+      </header>
+      <main class="app-main"><router-view /></main>
+    </div>
   </div>
 </div>
 
@@ -75,58 +280,32 @@
 const { createApp, ref, reactive, computed, onMounted, onUnmounted, nextTick } = Vue;
 const { createRouter, createWebHashHistory } = VueRouter;
 
-// ========== API 封装 ==========
-// 从错误响应中提取用户可读信息：优先解析 JSON 中的 message 字段，避免弹出原始 JSON 串
 async function extractErrorMessage(res) {
   const text = await res.text().catch(() => '');
   if (!text) return `请求失败(${res.status}): ${res.statusText}`;
-  try {
-    const data = JSON.parse(text);
-    if (data && typeof data.message === 'string' && data.message.trim()) {
-      return data.message;
-    }
-  } catch (_) { /* 非 JSON，按原文处理 */ }
+  try { const data = JSON.parse(text); if (data && typeof data.message === 'string' && data.message.trim()) return data.message; } catch (_) {}
   return `请求失败(${res.status}): ${text}`;
 }
 const api = {
   async get(url, params) {
-    const query = params ? '?' + new URLSearchParams(
-      Object.entries(params).filter(([_,v]) => v != null && v !== '')
-    ).toString() : '';
+    const query = params ? '?' + new URLSearchParams(Object.entries(params).filter(([_,v]) => v != null && v !== '')).toString() : '';
     const res = await fetch(url + query);
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new Error(`请求失败(${res.status}): ${text || res.statusText}`);
-    }
+    if (!res.ok) throw new Error(await extractErrorMessage(res));
     return res.json();
   },
   async post(url, body) {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: body ? JSON.stringify(body) : undefined
-    });
-    if (!res.ok) {
-      throw new Error(await extractErrorMessage(res));
-    }
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+    if (!res.ok) throw new Error(await extractErrorMessage(res));
     return res.json();
   },
   async put(url, body) {
-    const res = await fetch(url, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: body ? JSON.stringify(body) : undefined
-    });
-    if (!res.ok) {
-      throw new Error(await extractErrorMessage(res));
-    }
+    const res = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
+    if (!res.ok) throw new Error(await extractErrorMessage(res));
     return res.json();
   },
   async del(url) {
     const res = await fetch(url, { method: 'DELETE' });
-    if (!res.ok) {
-      throw new Error(await extractErrorMessage(res));
-    }
+    if (!res.ok) throw new Error(await extractErrorMessage(res));
     return res.json();
   },
   getStatistics: () => api.get('/api/statistics'),
@@ -148,110 +327,91 @@ const api = {
   getTypeStatistics: () => api.get('/api/statistics/by-type'),
 };
 
-// ========== 省市二级联动数据 ==========
 const PROVINCE_CITY_DATA = [
-  { value: '北京市', label: '北京市' },
-  { value: '上海市', label: '上海市' },
-  { value: '天津市', label: '天津市' },
-  { value: '重庆市', label: '重庆市' },
-  { value: '河北省', label: '河北', children: [{ value: '石家庄市', label: '石家庄' }, { value: '唐山市', label: '唐山' }, { value: '秦皇岛市', label: '秦皇岛' }, { value: '邯郸市', label: '邯郸' }, { value: '保定市', label: '保定' }, { value: '张家口市', label: '张家口' }, { value: '廊坊市', label: '廊坊' }] },
-  { value: '山西省', label: '山西', children: [{ value: '太原市', label: '太原' }, { value: '大同市', label: '大同' }, { value: '阳泉市', label: '阳泉' }, { value: '长治市', label: '长治' }, { value: '晋城市', label: '晋城' }, { value: '临汾市', label: '临汾' }] },
-  { value: '辽宁省', label: '辽宁', children: [{ value: '沈阳市', label: '沈阳' }, { value: '大连市', label: '大连' }, { value: '鞍山市', label: '鞍山' }, { value: '抚顺市', label: '抚顺' }, { value: '本溪市', label: '本溪' }, { value: '丹东市', label: '丹东' }, { value: '锦州市', label: '锦州' }, { value: '营口市', label: '营口' }] },
-  { value: '吉林省', label: '吉林', children: [{ value: '长春市', label: '长春' }, { value: '吉林市', label: '吉林' }, { value: '四平市', label: '四平' }, { value: '通化市', label: '通化' }, { value: '白山市', label: '白山' }, { value: '松原市', label: '松原' }] },
-  { value: '黑龙江省', label: '黑龙江', children: [{ value: '哈尔滨市', label: '哈尔滨' }, { value: '齐齐哈尔市', label: '齐齐哈尔' }, { value: '大庆市', label: '大庆' }, { value: '伊春市', label: '伊春' }, { value: '鹤岗市', label: '鹤岗' }, { value: '双鸭山市', label: '双鸭山' }, { value: '鸡西市', label: '鸡西' }, { value: '佳木斯市', label: '佳木斯' }] },
-  { value: '江苏省', label: '江苏', children: [{ value: '南京市', label: '南京' }, { value: '苏州市', label: '苏州' }, { value: '无锡市', label: '无锡' }, { value: '常州市', label: '常州' }, { value: '南通市', label: '南通' }, { value: '徐州市', label: '徐州' }, { value: '扬州市', label: '扬州' }] },
-  { value: '浙江省', label: '浙江', children: [{ value: '杭州市', label: '杭州' }, { value: '宁波市', label: '宁波' }, { value: '温州市', label: '温州' }, { value: '嘉兴市', label: '嘉兴' }, { value: '湖州市', label: '湖州' }, { value: '绍兴市', label: '绍兴' }, { value: '金华市', label: '金华' }, { value: '台州市', label: '台州' }] },
-  { value: '安徽省', label: '安徽', children: [{ value: '合肥市', label: '合肥' }, { value: '芜湖市', label: '芜湖' }, { value: '蚌埠市', label: '蚌埠' }, { value: '淮南市', label: '淮南' }, { value: '马鞍山市', label: '马鞍山' }, { value: '安庆市', label: '安庆' }, { value: '黄山市', label: '黄山' }, { value: '阜阳市', label: '阜阳' }] },
-  { value: '福建省', label: '福建', children: [{ value: '福州市', label: '福州' }, { value: '厦门市', label: '厦门' }, { value: '莆田市', label: '莆田' }, { value: '泉州市', label: '泉州' }, { value: '漳州市', label: '漳州' }, { value: '龙岩市', label: '龙岩' }, { value: '三明市', label: '三明' }] },
-  { value: '江西省', label: '江西', children: [{ value: '南昌市', label: '南昌' }, { value: '景德镇市', label: '景德镇' }, { value: '萍乡市', label: '萍乡' }, { value: '九江市', label: '九江' }, { value: '新余市', label: '新余' }, { value: '赣州市', label: '赣州' }, { value: '抚州市', label: '抚州' }, { value: '上饶市', label: '上饶' }] },
-  { value: '山东省', label: '山东', children: [{ value: '济南市', label: '济南' }, { value: '青岛市', label: '青岛' }, { value: '淄博市', label: '淄博' }, { value: '枣庄市', label: '枣庄' }, { value: '东营市', label: '东营' }, { value: '烟台市', label: '烟台' }, { value: '潍坊市', label: '潍坊' }, { value: '济宁市', label: '济宁' }, { value: '泰安市', label: '泰安' }, { value: '临沂市', label: '临沂' }, { value: '德州市', label: '德州' }] },
-  { value: '河南省', label: '河南', children: [{ value: '郑州市', label: '郑州' }, { value: '开封市', label: '开封' }, { value: '洛阳市', label: '洛阳' }, { value: '安阳市', label: '安阳' }, { value: '新乡市', label: '新乡' }, { value: '焦作市', label: '焦作' }, { value: '许昌市', label: '许昌' }, { value: '南阳市', label: '南阳' }, { value: '信阳市', label: '信阳' }] },
-  { value: '湖北省', label: '湖北', children: [{ value: '武汉市', label: '武汉' }, { value: '黄石市', label: '黄石' }, { value: '十堰市', label: '十堰' }, { value: '宜昌市', label: '宜昌' }, { value: '襄阳市', label: '襄阳' }, { value: '荆门市', label: '荆门' }, { value: '孝感市', label: '孝感' }, { value: '荆州市', label: '荆州' }] },
-  { value: '湖南省', label: '湖南', children: [{ value: '长沙市', label: '长沙' }, { value: '株洲市', label: '株洲' }, { value: '湘潭市', label: '湘潭' }, { value: '衡阳市', label: '衡阳' }, { value: '邵阳市', label: '邵阳' }, { value: '岳阳市', label: '岳阳' }, { value: '常德市', label: '常德' }, { value: '益阳市', label: '益阳' }] },
-  { value: '广东省', label: '广东', children: [{ value: '广州市', label: '广州' }, { value: '深圳市', label: '深圳' }, { value: '珠海市', label: '珠海' }, { value: '汕头市', label: '汕头' }, { value: '佛山市', label: '佛山' }, { value: '东莞市', label: '东莞' }, { value: '中山市', label: '中山' }, { value: '惠州市', label: '惠州' }] },
-  { value: '海南省', label: '海南', children: [{ value: '海口市', label: '海口' }, { value: '三亚市', label: '三亚' }, { value: '儋州市', label: '儋州' }] },
-  { value: '四川省', label: '四川', children: [{ value: '成都市', label: '成都' }, { value: '自贡市', label: '自贡' }, { value: '绵阳市', label: '绵阳' }, { value: '德阳市', label: '德阳' }, { value: '广元市', label: '广元' }, { value: '遂宁市', label: '遂宁' }, { value: '内江市', label: '内江' }, { value: '乐山市', label: '乐山' }, { value: '南充市', label: '南充' }, { value: '宜宾市', label: '宜宾' }] },
-  { value: '贵州省', label: '贵州', children: [{ value: '贵阳市', label: '贵阳' }, { value: '六盘水市', label: '六盘水' }, { value: '遵义市', label: '遵义' }, { value: '安顺市', label: '安顺' }, { value: '毕节市', label: '毕节' }] },
-  { value: '云南省', label: '云南', children: [{ value: '昆明市', label: '昆明' }, { value: '曲靖市', label: '曲靖' }, { value: '玉溪市', label: '玉溪' }, { value: '保山市', label: '保山' }, { value: '昭通市', label: '昭通' }, { value: '丽江市', label: '丽江' }, { value: '普洱市', label: '普洱' }] },
-  { value: '陕西省', label: '陕西', children: [{ value: '西安市', label: '西安' }, { value: '铜川市', label: '铜川' }, { value: '宝鸡市', label: '宝鸡' }, { value: '咸阳市', label: '咸阳' }, { value: '渭南市', label: '渭南' }, { value: '延安市', label: '延安' }, { value: '汉中市', label: '汉中' }, { value: '榆林市', label: '榆林' }] },
-  { value: '甘肃省', label: '甘肃', children: [{ value: '兰州市', label: '兰州' }, { value: '嘉峪关市', label: '嘉峪关' }, { value: '金昌市', label: '金昌' }, { value: '白银市', label: '白银' }, { value: '天水市', label: '天水' }, { value: '武威市', label: '武威' }, { value: '张掖市', label: '张掖' }] },
-  { value: '青海省', label: '青海', children: [{ value: '西宁市', label: '西宁' }, { value: '海东市', label: '海东' }] },
-  { value: '内蒙古自治区', label: '内蒙古', children: [{ value: '呼和浩特市', label: '呼和浩特' }, { value: '包头市', label: '包头' }, { value: '乌海市', label: '乌海' }, { value: '赤峰市', label: '赤峰' }, { value: '通辽市', label: '通辽' }, { value: '鄂尔多斯市', label: '鄂尔多斯' }, { value: '呼伦贝尔市', label: '呼伦贝尔' }] },
-  { value: '广西壮族自治区', label: '广西', children: [{ value: '南宁市', label: '南宁' }, { value: '柳州市', label: '柳州' }, { value: '桂林市', label: '桂林' }, { value: '梧州市', label: '梧州' }, { value: '北海市', label: '北海' }, { value: '钦州市', label: '钦州' }, { value: '贵港市', label: '贵港' }] },
-  { value: '新疆维吾尔自治区', label: '新疆', children: [{ value: '乌鲁木齐市', label: '乌鲁木齐' }, { value: '克拉玛依市', label: '克拉玛依' }, { value: '吐鲁番市', label: '吐鲁番' }, { value: '哈密市', label: '哈密' }, { value: '昌吉回族自治州', label: '昌吉' }, { value: '博尔塔拉蒙古自治州', label: '博尔塔拉' }, { value: '巴音郭楞蒙古自治州', label: '巴音郭楞' }, { value: '伊犁哈萨克自治州', label: '伊犁' }] },
-  { value: '宁夏回族自治区', label: '宁夏', children: [{ value: '银川市', label: '银川' }, { value: '石嘴山市', label: '石嘴山' }, { value: '吴忠市', label: '吴忠' }, { value: '固原市', label: '固原' }] },
-  { value: '西藏自治区', label: '西藏', children: [{ value: '拉萨市', label: '拉萨' }, { value: '日喀则市', label: '日喀则' }, { value: '昌都市', label: '昌都' }, { value: '林芝市', label: '林芝' }, { value: '山南市', label: '山南' }] },
+  {value:'北京市',label:'北京市'},{value:'上海市',label:'上海市'},{value:'天津市',label:'天津市'},{value:'重庆市',label:'重庆市'},
+  {value:'河北省',label:'河北',children:[{value:'石家庄市',label:'石家庄'},{value:'唐山市',label:'唐山'},{value:'秦皇岛市',label:'秦皇岛'},{value:'邯郸市',label:'邯郸'},{value:'保定市',label:'保定'},{value:'张家口市',label:'张家口'},{value:'廊坊市',label:'廊坊'}]},
+  {value:'山西省',label:'山西',children:[{value:'太原市',label:'太原'},{value:'大同市',label:'大同'},{value:'阳泉市',label:'阳泉'},{value:'长治市',label:'长治'},{value:'晋城市',label:'晋城'},{value:'临汾市',label:'临汾'}]},
+  {value:'辽宁省',label:'辽宁',children:[{value:'沈阳市',label:'沈阳'},{value:'大连市',label:'大连'},{value:'鞍山市',label:'鞍山'},{value:'抚顺市',label:'抚顺'},{value:'本溪市',label:'本溪'},{value:'丹东市',label:'丹东'},{value:'锦州市',label:'锦州'},{value:'营口市',label:'营口'}]},
+  {value:'吉林省',label:'吉林',children:[{value:'长春市',label:'长春'},{value:'吉林市',label:'吉林'},{value:'四平市',label:'四平'},{value:'通化市',label:'通化'},{value:'白山市',label:'白山'},{value:'松原市',label:'松原'}]},
+  {value:'黑龙江省',label:'黑龙江',children:[{value:'哈尔滨市',label:'哈尔滨'},{value:'齐齐哈尔市',label:'齐齐哈尔'},{value:'大庆市',label:'大庆'},{value:'伊春市',label:'伊春'},{value:'鹤岗市',label:'鹤岗'},{value:'双鸭山市',label:'双鸭山'},{value:'鸡西市',label:'鸡西'},{value:'佳木斯市',label:'佳木斯'}]},
+  {value:'江苏省',label:'江苏',children:[{value:'南京市',label:'南京'},{value:'苏州市',label:'苏州'},{value:'无锡市',label:'无锡'},{value:'常州市',label:'常州'},{value:'南通市',label:'南通'},{value:'徐州市',label:'徐州'},{value:'扬州市',label:'扬州'}]},
+  {value:'浙江省',label:'浙江',children:[{value:'杭州市',label:'杭州'},{value:'宁波市',label:'宁波'},{value:'温州市',label:'温州'},{value:'嘉兴市',label:'嘉兴'},{value:'湖州市',label:'湖州'},{value:'绍兴市',label:'绍兴'},{value:'金华市',label:'金华'},{value:'台州市',label:'台州'}]},
+  {value:'安徽省',label:'安徽',children:[{value:'合肥市',label:'合肥'},{value:'芜湖市',label:'芜湖'},{value:'蚌埠市',label:'蚌埠'},{value:'淮南市',label:'淮南'},{value:'马鞍山市',label:'马鞍山'},{value:'安庆市',label:'安庆'},{value:'黄山市',label:'黄山'},{value:'阜阳市',label:'阜阳'}]},
+  {value:'福建省',label:'福建',children:[{value:'福州市',label:'福州'},{value:'厦门市',label:'厦门'},{value:'莆田市',label:'莆田'},{value:'泉州市',label:'泉州'},{value:'漳州市',label:'漳州'},{value:'龙岩市',label:'龙岩'},{value:'三明市',label:'三明'}]},
+  {value:'江西省',label:'江西',children:[{value:'南昌市',label:'南昌'},{value:'景德镇市',label:'景德镇'},{value:'萍乡市',label:'萍乡'},{value:'九江市',label:'九江'},{value:'新余市',label:'新余'},{value:'赣州市',label:'赣州'},{value:'抚州市',label:'抚州'},{value:'上饶市',label:'上饶'}]},
+  {value:'山东省',label:'山东',children:[{value:'济南市',label:'济南'},{value:'青岛市',label:'青岛'},{value:'淄博市',label:'淄博'},{value:'枣庄市',label:'枣庄'},{value:'东营市',label:'东营'},{value:'烟台市',label:'烟台'},{value:'潍坊市',label:'潍坊'},{value:'济宁市',label:'济宁'},{value:'泰安市',label:'泰安'},{value:'临沂市',label:'临沂'},{value:'德州市',label:'德州'}]},
+  {value:'河南省',label:'河南',children:[{value:'郑州市',label:'郑州'},{value:'开封市',label:'开封'},{value:'洛阳市',label:'洛阳'},{value:'安阳市',label:'安阳'},{value:'新乡市',label:'新乡'},{value:'焦作市',label:'焦作'},{value:'许昌市',label:'许昌'},{value:'南阳市',label:'南阳'},{value:'信阳市',label:'信阳'}]},
+  {value:'湖北省',label:'湖北',children:[{value:'武汉市',label:'武汉'},{value:'黄石市',label:'黄石'},{value:'十堰市',label:'十堰'},{value:'宜昌市',label:'宜昌'},{value:'襄阳市',label:'襄阳'},{value:'荆门市',label:'荆门'},{value:'孝感市',label:'孝感'},{value:'荆州市',label:'荆州'}]},
+  {value:'湖南省',label:'湖南',children:[{value:'长沙市',label:'长沙'},{value:'株洲市',label:'株洲'},{value:'湘潭市',label:'湘潭'},{value:'衡阳市',label:'衡阳'},{value:'邵阳市',label:'邵阳'},{value:'岳阳市',label:'岳阳'},{value:'常德市',label:'常德'},{value:'益阳市',label:'益阳'}]},
+  {value:'广东省',label:'广东',children:[{value:'广州市',label:'广州'},{value:'深圳市',label:'深圳'},{value:'珠海市',label:'珠海'},{value:'汕头市',label:'汕头'},{value:'佛山市',label:'佛山'},{value:'东莞市',label:'东莞'},{value:'中山市',label:'中山'},{value:'惠州市',label:'惠州'}]},
+  {value:'海南省',label:'海南',children:[{value:'海口市',label:'海口'},{value:'三亚市',label:'三亚'},{value:'儋州市',label:'儋州'}]},
+  {value:'四川省',label:'四川',children:[{value:'成都市',label:'成都'},{value:'自贡市',label:'自贡'},{value:'绵阳市',label:'绵阳'},{value:'德阳市',label:'德阳'},{value:'广元市',label:'广元'},{value:'遂宁市',label:'遂宁'},{value:'内江市',label:'内江'},{value:'乐山市',label:'乐山'},{value:'南充市',label:'南充'},{value:'宜宾市',label:'宜宾'}]},
+  {value:'贵州省',label:'贵州',children:[{value:'贵阳市',label:'贵阳'},{value:'六盘水市',label:'六盘水'},{value:'遵义市',label:'遵义'},{value:'安顺市',label:'安顺'},{value:'毕节市',label:'毕节'}]},
+  {value:'云南省',label:'云南',children:[{value:'昆明市',label:'昆明'},{value:'曲靖市',label:'曲靖'},{value:'玉溪市',label:'玉溪'},{value:'保山市',label:'保山'},{value:'昭通市',label:'昭通'},{value:'丽江市',label:'丽江'},{value:'普洱市',label:'普洱'}]},
+  {value:'陕西省',label:'陕西',children:[{value:'西安市',label:'西安'},{value:'铜川市',label:'铜川'},{value:'宝鸡市',label:'宝鸡'},{value:'咸阳市',label:'咸阳'},{value:'渭南市',label:'渭南'},{value:'延安市',label:'延安'},{value:'汉中市',label:'汉中'},{value:'榆林市',label:'榆林'}]},
+  {value:'甘肃省',label:'甘肃',children:[{value:'兰州市',label:'兰州'},{value:'嘉峪关市',label:'嘉峪关'},{value:'金昌市',label:'金昌'},{value:'白银市',label:'白银'},{value:'天水市',label:'天水'},{value:'武威市',label:'武威'},{value:'张掖市',label:'张掖'}]},
+  {value:'青海省',label:'青海',children:[{value:'西宁市',label:'西宁'},{value:'海东市',label:'海东'}]},
+  {value:'内蒙古自治区',label:'内蒙古',children:[{value:'呼和浩特市',label:'呼和浩特'},{value:'包头市',label:'包头'},{value:'乌海市',label:'乌海'},{value:'赤峰市',label:'赤峰'},{value:'通辽市',label:'通辽'},{value:'鄂尔多斯市',label:'鄂尔多斯'},{value:'呼伦贝尔市',label:'呼伦贝尔'}]},
+  {value:'广西壮族自治区',label:'广西',children:[{value:'南宁市',label:'南宁'},{value:'柳州市',label:'柳州'},{value:'桂林市',label:'桂林'},{value:'梧州市',label:'梧州'},{value:'北海市',label:'北海'},{value:'钦州市',label:'钦州'},{value:'贵港市',label:'贵港'}]},
+  {value:'新疆维吾尔自治区',label:'新疆',children:[{value:'乌鲁木齐市',label:'乌鲁木齐'},{value:'克拉玛依市',label:'克拉玛依'},{value:'吐鲁番市',label:'吐鲁番'},{value:'哈密市',label:'哈密'},{value:'昌吉回族自治州',label:'昌吉'},{value:'博尔塔拉蒙古自治州',label:'博尔塔拉'},{value:'巴音郭楞蒙古自治州',label:'巴音郭楞'},{value:'伊犁哈萨克自治州',label:'伊犁'}]},
+  {value:'宁夏回族自治区',label:'宁夏',children:[{value:'银川市',label:'银川'},{value:'石嘴山市',label:'石嘴山'},{value:'吴忠市',label:'吴忠'},{value:'固原市',label:'固原'}]},
+  {value:'西藏自治区',label:'西藏',children:[{value:'拉萨市',label:'拉萨'},{value:'日喀则市',label:'日喀则'},{value:'昌都市',label:'昌都'},{value:'林芝市',label:'林芝'},{value:'山南市',label:'山南'}]},
 ];
 
-// 城市名到省份路径的映射，用于编辑时回填级联选择器
 function findCityPath(cityName) {
   if (!cityName) return [];
   for (const item of PROVINCE_CITY_DATA) {
     if (item.value === cityName) return [item.value];
-    if (item.children) {
-      for (const child of item.children) {
-        if (child.value === cityName) return [item.value, child.value];
-      }
-    }
+    if (item.children) { for (const child of item.children) { if (child.value === cityName) return [item.value, child.value]; } }
   }
-  return [cityName]; // 找不到则回退到自定义值
+  return [cityName];
 }
 
-// ========== 仪表盘组件 ==========
 const Dashboard = {
   template: `
-<div class="dashboard">
-  <el-row :gutter="20" class="stat-cards">
-    <el-col :span="6">
-      <el-card shadow="hover" class="stat-card">
-        <div class="stat-value">{{ stats.totalCount || 0 }}</div>
-        <div class="stat-label">线索总数</div>
-      </el-card>
-    </el-col>
-    <el-col :span="6">
-      <el-card shadow="hover" class="stat-card scored">
-        <div class="stat-value">{{ stats.scoredCount || 0 }}</div>
-        <div class="stat-label">已评分</div>
-      </el-card>
-    </el-col>
-    <el-col :span="6">
-      <el-card shadow="hover" class="stat-card pending">
-        <div class="stat-value">{{ stats.unscoredCount || 0 }}</div>
-        <div class="stat-label">待评分</div>
-      </el-card>
-    </el-col>
-    <el-col :span="6">
-      <el-card shadow="hover" class="stat-card action">
-        <div class="stat-value">
-          <el-button type="primary" @click="handleTriggerSearch" :loading="searchLoading">立即搜索</el-button>
-          <el-button type="success" @click="handleTriggerAnalysis" :loading="analysisLoading" style="margin-left:8px">立即分析</el-button>
-        </div>
-        <div class="stat-label">手动触发</div>
-      </el-card>
-    </el-col>
-  </el-row>
+<div class="dashboard fade-in-up">
+  <div class="dashboard-stats">
+    <div class="stat-card card-total fade-in-up-1">
+      <div class="stat-icon"><el-icon><collection /></el-icon></div>
+      <div class="stat-value">{{ stats.totalCount || 0 }}</div>
+      <div class="stat-label">线索总数</div>
+    </div>
+    <div class="stat-card card-scored fade-in-up-2">
+      <div class="stat-icon"><el-icon><circle-check /></el-icon></div>
+      <div class="stat-value">{{ stats.scoredCount || 0 }}</div>
+      <div class="stat-label">已评分</div>
+    </div>
+    <div class="stat-card card-pending fade-in-up-3">
+      <div class="stat-icon"><el-icon><timer /></el-icon></div>
+      <div class="stat-value">{{ stats.unscoredCount || 0 }}</div>
+      <div class="stat-label">待评分</div>
+    </div>
+    <div class="stat-card card-action fade-in-up-4">
+      <div class="action-btns">
+        <el-button type="primary" @click="handleTriggerSearch" :loading="searchLoading">立即搜索</el-button>
+        <el-button type="success" @click="handleTriggerAnalysis" :loading="analysisLoading">立即分析</el-button>
+      </div>
+      <div class="stat-label">手动触发</div>
+    </div>
+  </div>
 
-  <el-row :gutter="20" style="margin-top: 20px;">
-    <el-col :span="12">
-      <el-card shadow="hover">
-        <template #header><span>城市分布</span></template>
-        <div ref="cityChartRef" style="height: 350px;"></div>
-      </el-card>
-    </el-col>
-    <el-col :span="12">
-      <el-card shadow="hover">
-        <template #header><span>类型分布</span></template>
-        <div ref="typeChartRef" style="height: 350px;"></div>
-      </el-card>
-    </el-col>
-  </el-row>
+  <div class="chart-row">
+    <el-card shadow="hover" class="chart-card">
+      <template #header><span><el-icon style="margin-right:6px"><histogram /></el-icon>城市分布</span></template>
+      <div ref="cityChartRef" class="chart-wrapper"></div>
+    </el-card>
+    <el-card shadow="hover" class="chart-card">
+      <template #header><span><el-icon style="margin-right:6px"><pie-chart /></el-icon>类型分布</span></template>
+      <div ref="typeChartRef" class="chart-wrapper"></div>
+    </el-card>
+  </div>
 
-  <el-card shadow="hover" style="margin-top: 20px;">
-    <template #header><span>调度日志</span></template>
-    <el-table :data="schedulerLogs" stripe size="small">
+  <el-card shadow="hover" class="log-table-card">
+    <template #header><span><el-icon style="margin-right:6px"><list /></el-icon>调度日志</span></template>
+    <el-table :data="schedulerLogs" stripe size="default" style="width:100%">
       <el-table-column label="任务名称" width="150">
         <template #default="{ row }">
-          <el-tag :type="row.taskName === 'SEARCH_CRAWL' ? 'primary' : 'success'" size="small">
+          <el-tag :type="row.taskName === 'SEARCH_CRAWL' ? 'primary' : 'success'" size="small" effect="light">
             {{ row.taskName === 'SEARCH_CRAWL' ? '搜索抓取' : '评分分析' }}
           </el-tag>
         </template>
@@ -260,13 +420,13 @@ const Dashboard = {
       <el-table-column prop="endTime" label="结束时间" width="170" />
       <el-table-column label="状态" width="100">
         <template #default="{ row }">
-          <el-tag :type="row.status === 'SUCCESS' ? 'success' : row.status === 'FAILED' ? 'danger' : 'warning'" size="small">
+          <el-tag :type="row.status === 'SUCCESS' ? 'success' : row.status === 'FAILED' ? 'danger' : 'warning'" size="small" effect="light">
             {{ row.status === 'SUCCESS' ? '成功' : row.status === 'FAILED' ? '失败' : '运行中' }}
           </el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="totalCount" label="处理总数" width="100" />
-      <el-table-column prop="newCount" label="新增/分析数" width="110" />
+      <el-table-column prop="newCount" label="新增/分析数" width="120" />
       <el-table-column prop="errorMsg" label="错误信息" min-width="200" show-overflow-tooltip />
     </el-table>
   </el-card>
@@ -279,7 +439,6 @@ const Dashboard = {
     const typeChartRef = ref(null);
     const searchLoading = ref(false);
     const analysisLoading = ref(false);
-    // 有任务执行中时启动轮询
     let pollTimer = null;
 
     const loadData = async () => {
@@ -296,43 +455,30 @@ const Dashboard = {
         return;
       }
       await nextTick();
-      // 图表渲染独立 try-catch：API 数据已加载，图表失败不应影响其他面板
-      try { renderCityChart(cityData); }
-      catch (e1) { console.error('城市分布图渲染失败:', e1); ElMessage.warning('城市分布图渲染失败: ' + (e1 && e1.message ? e1.message : e1)); }
-      try { renderTypeChart(typeData); }
-      catch (e2) { console.error('类型分布图渲染失败:', e2); ElMessage.warning('类型分布图渲染失败: ' + (e2 && e2.message ? e2.message : e2)); }
+      try { renderCityChart(cityData); } catch (e1) { console.error('城市分布图渲染失败:', e1); }
+      try { renderTypeChart(typeData); } catch (e2) { console.error('类型分布图渲染失败:', e2); }
       checkPolling();
     };
-
-    // 若最新日志中存在 RUNNING 状态，则启动轮询；否则停止
     const checkPolling = () => {
       const hasRunning = schedulerLogs.value.some(l => l.status === 'RUNNING');
-      if (hasRunning) startPolling();
-      else stopPolling();
+      if (hasRunning) startPolling(); else stopPolling();
     };
-
     const startPolling = () => {
       if (pollTimer) return;
       pollTimer = setInterval(async () => {
-        let cityData, typeData;
         try {
           const [statsData, logsData, cData, tData] = await Promise.all([
             api.getStatistics(), api.getSchedulerLogs(), api.getCityStatistics(), api.getTypeStatistics()
           ]);
-          stats.value = statsData;
-          schedulerLogs.value = logsData;
-          cityData = cData; typeData = tData;
-        } catch (e) { console.error('轮询 API 失败:', e); return; }
-        await nextTick();
-        try { renderCityChart(cityData); } catch (e1) { console.error('轮询城市图渲染失败:', e1); }
-        try { renderTypeChart(typeData); } catch (e2) { console.error('轮询类型图渲染失败:', e2); }
-        checkPolling();
+          stats.value = statsData; schedulerLogs.value = logsData;
+          await nextTick();
+          try { renderCityChart(cData); } catch (e) {}
+          try { renderTypeChart(tData); } catch (e) {}
+          checkPolling();
+        } catch (e) { console.error('轮询失败:', e); }
       }, 3000);
     };
-
-    const stopPolling = () => {
-      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
-    };
+    const stopPolling = () => { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } };
 
     const renderCityChart = (data) => {
       if (!cityChartRef.value) return;
@@ -340,23 +486,24 @@ const Dashboard = {
       const cities = data.slice(0, 15).map(d => d.city);
       const counts = data.slice(0, 15).map(d => d.count);
       chart.setOption({
-        tooltip: { trigger: 'axis' },
-        xAxis: { type: 'category', data: cities, axisLabel: { rotate: 45 } },
-        yAxis: { type: 'value' },
-        series: [{ type: 'bar', data: counts, itemStyle: { color: '#409EFF' } }],
-        grid: { bottom: 80 }
+        tooltip: { trigger: 'axis', backgroundColor: '#fff', borderColor: '#e2e8f0', textStyle: { color: '#1e293b' } },
+        grid: { left: 50, right: 20, bottom: 90, top: 20 },
+        xAxis: { type: 'category', data: cities, axisLabel: { rotate: 45, color: '#64748b', fontSize: 12 }, axisLine: { lineStyle: { color: '#e2e8f0' } } },
+        yAxis: { type: 'value', splitLine: { lineStyle: { color: '#f1f5f9' } }, axisLabel: { color: '#94a3b8' } },
+        series: [{ type: 'bar', data: counts, barWidth: '55%', itemStyle: { borderRadius: [6,6,0,0], color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'#3b82f6'},{offset:1,color:'#2563eb'}]) } }]
       });
     };
-
     const renderTypeChart = (data) => {
       if (!typeChartRef.value) return;
       const chart = echarts.init(typeChartRef.value);
       chart.setOption({
-        tooltip: { trigger: 'item' },
+        tooltip: { trigger: 'item', backgroundColor: '#fff', borderColor: '#e2e8f0' },
+        legend: { bottom: 0, textStyle: { color: '#64748b' } },
         series: [{
-          type: 'pie', radius: ['40%', '70%'],
-          data: data.map(d => ({ name: d.type, value: d.count })),
-          emphasis: { itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.5)' } }
+          type: 'pie', radius: ['42%', '70%'], center: ['50%', '45%'],
+          itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 3 },
+          label: { show: false },
+          data: data.map(d => ({ name: d.type, value: d.count }))
         }]
       });
     };
@@ -365,86 +512,46 @@ const Dashboard = {
       searchLoading.value = true;
       try {
         const res = await api.triggerSearch();
-        if (res.status === 'error') {
-          ElMessage.warning(res.message);
-        } else {
-          ElMessage.success(res.message || '搜索任务已下发，请稍后查看');
-          // 立即刷新一次日志（看到 RUNNING 记录）并启动轮询
-          schedulerLogs.value = await api.getSchedulerLogs();
-          checkPolling();
-        }
+        if (res.status === 'error') ElMessage.warning(res.message);
+        else { ElMessage.success(res.message || '搜索任务已下发，请稍后查看'); schedulerLogs.value = await api.getSchedulerLogs(); checkPolling(); }
       } catch (e) { ElMessage.error('搜索触发失败: ' + e.message); }
       finally { searchLoading.value = false; }
     };
-
     const handleTriggerAnalysis = async () => {
       analysisLoading.value = true;
       try {
         const res = await api.triggerAnalysis();
-        if (res.status === 'error') {
-          ElMessage.warning(res.message);
-        } else {
-          ElMessage.success(res.message || '分析任务已下发，请稍后查看');
-          schedulerLogs.value = await api.getSchedulerLogs();
-          checkPolling();
-        }
+        if (res.status === 'error') ElMessage.warning(res.message);
+        else { ElMessage.success(res.message || '分析任务已下发，请稍后查看'); schedulerLogs.value = await api.getSchedulerLogs(); checkPolling(); }
       } catch (e) { ElMessage.error('分析触发失败: ' + e.message); }
       finally { analysisLoading.value = false; }
     };
 
     onMounted(loadData);
-    // 组件卸载时清理定时器
     onUnmounted(stopPolling);
     return { stats, schedulerLogs, cityChartRef, typeChartRef, searchLoading, analysisLoading, handleTriggerSearch, handleTriggerAnalysis };
   }
 };
 
-// ========== 线索列表组件 ==========
 const RecordList = {
   template: `
-<div class="record-list">
-  <el-card shadow="hover">
+<div class="record-list fade-in-up">
+  <el-card shadow="hover" class="filter-card">
     <el-form :inline="true" class="filter-form">
-      <el-form-item label="城市">
-        <el-select v-model="filterCity" placeholder="全部城市" clearable style="width:200px">
-          <el-option v-for="c in cityList" :key="c" :label="c" :value="c" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="最低评分">
-        <el-input-number v-model="filterMinScore" :min="0" :max="100" placeholder="0" style="width:130px" />
-      </el-form-item>
-      <el-form-item label="最高评分">
-        <el-input-number v-model="filterMaxScore" :min="0" :max="100" placeholder="100" style="width:130px" />
-      </el-form-item>
-      <el-form-item label="类型">
-        <el-select v-model="filterType" placeholder="全部" clearable style="width:160px">
-          <el-option label="政府文件" value="政府文件" />
-          <el-option label="新闻" value="新闻" />
-          <el-option label="其他" value="其他" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="关键词">
-        <el-input v-model="filterKeyword" placeholder="标题/正文搜索" clearable style="width:200px" />
-      </el-form-item>
-      <el-form-item label="发布时间">
-        <el-date-picker
-          v-model="filterPublishRange"
-          type="daterange"
-          value-format="YYYY-MM-DD"
-          range-separator="至"
-          start-placeholder="开始日期"
-          end-placeholder="结束日期"
-          unlink-panels
-          :editable="false"
-          clearable
-          style="width:280px" />
-      </el-form-item>
+      <el-form-item label="城市"><el-select v-model="filterCity" placeholder="全部城市" clearable style="width:200px"><el-option v-for="c in cityList" :key="c" :label="c" :value="c" /></el-select></el-form-item>
+      <el-form-item label="最低评分"><el-input-number v-model="filterMinScore" :min="0" :max="100" placeholder="0" style="width:130px" /></el-form-item>
+      <el-form-item label="最高评分"><el-input-number v-model="filterMaxScore" :min="0" :max="100" placeholder="100" style="width:130px" /></el-form-item>
+      <el-form-item label="类型"><el-select v-model="filterType" placeholder="全部" clearable style="width:160px"><el-option label="政府文件" value="政府文件" /><el-option label="新闻" value="新闻" /><el-option label="其他" value="其他" /></el-select></el-form-item>
+      <el-form-item label="关键词"><el-input v-model="filterKeyword" placeholder="标题/正文搜索" clearable style="width:200px" /></el-form-item>
+      <el-form-item label="发布时间"><el-date-picker v-model="filterPublishRange" type="daterange" value-format="YYYY-MM-DD" range-separator="至" start-placeholder="开始日期" end-placeholder="结束日期" unlink-panels :editable="false" clearable style="width:280px" /></el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="handleSearch">查询</el-button>
+        <el-button type="primary" @click="handleSearch"><el-icon style="margin-right:4px"><search /></el-icon>查询</el-button>
         <el-button @click="handleReset">重置</el-button>
       </el-form-item>
     </el-form>
+  </el-card>
 
+  <el-card shadow="hover" class="table-card">
     <el-table :data="records" stripe v-loading="loading" @row-click="handleRowClick" style="cursor:pointer">
       <el-table-column prop="id" label="ID" width="70" />
       <el-table-column prop="title" label="标题" min-width="300" show-overflow-tooltip />
@@ -452,176 +559,116 @@ const RecordList = {
       <el-table-column label="评分" width="100">
         <template #default="{ row }">
           <template v-if="row.score != null">
-            <el-tag :type="row.score >= 70 ? 'success' : row.score >= 40 ? 'warning' : 'danger'" size="small">{{ row.score }}分</el-tag>
+            <el-tag :type="row.score >= 70 ? 'success' : row.score >= 40 ? 'warning' : 'danger'" size="small" effect="light" style="font-weight:600">{{ row.score }}分</el-tag>
           </template>
           <el-tag v-else type="info" size="small">未评分</el-tag>
         </template>
       </el-table-column>
       <el-table-column label="类型" width="100">
-        <template #default="{ row }">
-          <el-tag v-if="row.type" size="small">{{ row.type }}</el-tag>
-          <span v-else style="color:#999">-</span>
-        </template>
+        <template #default="{ row }"><el-tag v-if="row.type" size="small" effect="plain">{{ row.type }}</el-tag><span v-else style="color:#999">-</span></template>
       </el-table-column>
       <el-table-column label="金额" width="120" show-overflow-tooltip>
-        <template #default="{ row }">
-          <span v-if="row.amount">{{ row.amount }}</span><span v-else style="color:#999">-</span>
-        </template>
+        <template #default="{ row }"><span v-if="row.amount">{{ row.amount }}</span><span v-else style="color:#999">-</span></template>
       </el-table-column>
       <el-table-column label="截止日期" width="110">
-        <template #default="{ row }">
-          <span v-if="row.deadline">{{ row.deadline }}</span><span v-else style="color:#999">-</span>
-        </template>
+        <template #default="{ row }"><span v-if="row.deadline">{{ row.deadline }}</span><span v-else style="color:#999">-</span></template>
       </el-table-column>
       <el-table-column prop="publishTime" label="发布时间" width="110" />
       <el-table-column prop="createdTime" label="抓取时间" width="170" />
       <el-table-column label="操作" width="80" fixed="right">
-        <template #default="{ row }">
-          <el-button type="primary" link size="small" @click.stop="$router.push('/records/' + row.id)">详情</el-button>
-        </template>
+        <template #default="{ row }"><el-button type="primary" link size="small" @click.stop="$router.push('/records/' + row.id)">详情</el-button></template>
       </el-table-column>
     </el-table>
-
     <div class="pagination-row">
-      <el-pagination
-        v-model:current-page="pageNum" v-model:page-size="pageSize"
-        :page-sizes="[10, 20, 50, 100]" :total="total"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSearch" @current-change="handleSearch" />
+      <el-pagination background v-model:current-page="pageNum" v-model:page-size="pageSize" :page-sizes="[10,20,50,100]" :total="total" layout="total, sizes, prev, pager, next, jumper" @size-change="handleSearch" @current-change="handleSearch" />
     </div>
   </el-card>
 </div>`,
   setup() {
-    const records = ref([]);
-    const loading = ref(false);
-    const total = ref(0);
-    const pageNum = ref(1);
-    const pageSize = ref(20);
-    const cityList = ref([]);
-    // 使用独立 ref 绑定下拉菜单，确保选中后正确反显
-    const filterCity = ref(null);
-    const filterMinScore = ref(null);
-    const filterMaxScore = ref(null);
-    const filterType = ref(null);
-    const filterKeyword = ref(null);
-    const filterPublishRange = ref(null);
-
+    const records = ref([]); const loading = ref(false); const total = ref(0);
+    const pageNum = ref(1); const pageSize = ref(20); const cityList = ref([]);
+    const filterCity = ref(null); const filterMinScore = ref(null); const filterMaxScore = ref(null);
+    const filterType = ref(null); const filterKeyword = ref(null); const filterPublishRange = ref(null);
     const handleSearch = async () => {
       loading.value = true;
       try {
-        const params = {
-          page: pageNum.value - 1, size: pageSize.value,
-          city: filterCity.value, minScore: filterMinScore.value,
-          maxScore: filterMaxScore.value, type: filterType.value,
-          keyword: filterKeyword.value,
-          publishStart: filterPublishRange.value ? filterPublishRange.value[0] : null,
-          publishEnd: filterPublishRange.value ? filterPublishRange.value[1] : null
-        };
+        const params = { page: pageNum.value - 1, size: pageSize.value, city: filterCity.value, minScore: filterMinScore.value, maxScore: filterMaxScore.value, type: filterType.value, keyword: filterKeyword.value, publishStart: filterPublishRange.value ? filterPublishRange.value[0] : null, publishEnd: filterPublishRange.value ? filterPublishRange.value[1] : null };
         const res = await api.getRecords(params);
-        records.value = res.content;
-        total.value = res.totalElements;
+        records.value = res.content; total.value = res.totalElements;
       } catch (e) { console.error('查询失败', e); }
       finally { loading.value = false; }
     };
-
-    const handleReset = () => {
-      filterCity.value = null;
-      filterMinScore.value = null;
-      filterMaxScore.value = null;
-      filterType.value = null;
-      filterKeyword.value = null;
-      filterPublishRange.value = null;
-      pageNum.value = 1;
-      handleSearch();
-    };
-
+    const handleReset = () => { filterCity.value = null; filterMinScore.value = null; filterMaxScore.value = null; filterType.value = null; filterKeyword.value = null; filterPublishRange.value = null; pageNum.value = 1; handleSearch(); };
     const handleRowClick = (row) => { window.location.hash = '#/records/' + row.id; };
-
-    onMounted(async () => {
-      try { cityList.value = await api.getRecordCities(); } catch (e) {}
-      handleSearch();
-    });
-
-    return { records, loading, total, pageNum, pageSize, cityList,
-      filterCity, filterMinScore, filterMaxScore, filterType, filterKeyword,
-      filterPublishRange,
-      handleSearch, handleReset, handleRowClick };
+    onMounted(async () => { try { cityList.value = await api.getRecordCities(); } catch (e) {} handleSearch(); });
+    return { records, loading, total, pageNum, pageSize, cityList, filterCity, filterMinScore, filterMaxScore, filterType, filterKeyword, filterPublishRange, handleSearch, handleReset, handleRowClick };
   }
 };
 
-// ========== 线索详情组件 ==========
 const RecordDetail = {
   props: ['id'],
   template: `
-<div class="record-detail">
+<div class="detail-page fade-in-up">
   <el-card shadow="hover" v-loading="loading">
     <template #header>
-      <div class="detail-header">
-        <el-button @click="$router.back()">返回</el-button>
-        <span class="detail-title">线索详情</span>
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="detail-back-btn" @click="$router.back()"><el-icon><arrow-left /></el-icon>返回</button>
+        <span style="font-size:16px;font-weight:600">线索详情</span>
       </div>
     </template>
     <template v-if="record">
-      <el-descriptions title="基础信息" :column="2" border>
+      <div class="el-descriptions__title" style="margin-bottom:16px">基础信息</div>
+      <el-descriptions :column="2" border size="default">
         <el-descriptions-item label="ID">{{ record.id }}</el-descriptions-item>
         <el-descriptions-item label="来源城市">{{ record.sourceCity || '-' }}</el-descriptions-item>
         <el-descriptions-item label="标题" :span="2">{{ record.title }}</el-descriptions-item>
-        <el-descriptions-item label="URL" :span="2">
-          <a :href="record.url" target="_blank" style="color:#409EFF;word-break:break-all">{{ record.url }}</a>
-        </el-descriptions-item>
+        <el-descriptions-item label="URL" :span="2"><a :href="record.url" target="_blank" style="color:#2563eb;word-break:break-all">{{ record.url }}</a></el-descriptions-item>
         <el-descriptions-item label="发布时间">{{ record.publishTime || '-' }}</el-descriptions-item>
         <el-descriptions-item label="抓取时间">{{ record.createdTime || '-' }}</el-descriptions-item>
       </el-descriptions>
 
-      <el-descriptions title="AI分析结果" :column="2" border style="margin-top: 20px;">
+      <div class="el-descriptions__title" style="margin:24px 0 16px">AI 分析结果</div>
+      <el-descriptions :column="2" border size="default">
         <el-descriptions-item label="省">{{ record.province || '-' }}</el-descriptions-item>
         <el-descriptions-item label="市">{{ record.city || '-' }}</el-descriptions-item>
         <el-descriptions-item label="区县">{{ record.county || '-' }}</el-descriptions-item>
         <el-descriptions-item label="截止日期">{{ record.deadline || '-' }}</el-descriptions-item>
         <el-descriptions-item label="金额规模">{{ record.amount || '-' }}</el-descriptions-item>
         <el-descriptions-item label="是否招标文件">
-          <el-tag v-if="record.typeFlag === true" type="success">是</el-tag>
-          <el-tag v-else-if="record.typeFlag === false" type="info">否</el-tag>
+          <el-tag v-if="record.typeFlag === true" type="success" size="small" effect="light">是</el-tag>
+          <el-tag v-else-if="record.typeFlag === false" type="info" size="small">否</el-tag>
           <span v-else>-</span>
         </el-descriptions-item>
-        <el-descriptions-item label="类型">
-          <el-tag v-if="record.type" size="small">{{ record.type }}</el-tag><span v-else>-</span>
-        </el-descriptions-item>
+        <el-descriptions-item label="类型"><el-tag v-if="record.type" size="small" effect="plain">{{ record.type }}</el-tag><span v-else>-</span></el-descriptions-item>
         <el-descriptions-item label="评分">
           <template v-if="record.score != null">
-            <el-tag :type="record.score >= 70 ? 'success' : record.score >= 40 ? 'warning' : 'danger'" size="large">{{ record.score }} 分</el-tag>
+            <el-tag :type="record.score >= 70 ? 'success' : record.score >= 40 ? 'warning' : 'danger'" size="large" effect="light" style="font-weight:700">{{ record.score }} 分</el-tag>
           </template>
           <span v-else style="color:#999">未评分</span>
         </el-descriptions-item>
         <el-descriptions-item label="评分依据" :span="2">{{ record.scoreReason || '-' }}</el-descriptions-item>
       </el-descriptions>
 
-      <el-card shadow="never" style="margin-top: 20px;">
-        <template #header><span>网页正文</span></template>
-        <div class="content-text">{{ record.content || '（无正文内容）' }}</div>
-      </el-card>
+      <div style="margin-top:24px">
+        <div class="el-descriptions__title" style="margin-bottom:16px">网页正文</div>
+        <div class="content-box">{{ record.content || '（无正文内容）' }}</div>
+      </div>
     </template>
     <el-empty v-else description="记录不存在" />
   </el-card>
 </div>`,
   setup(props) {
-    const record = ref(null);
-    const loading = ref(false);
-    onMounted(async () => {
-      loading.value = true;
-      try { record.value = await api.getRecord(props.id); } catch (e) {}
-      finally { loading.value = false; }
-    });
+    const record = ref(null); const loading = ref(false);
+    onMounted(async () => { loading.value = true; try { record.value = await api.getRecord(props.id); } catch (e) {} finally { loading.value = false; } });
     return { record, loading };
   }
 };
 
-// ========== 系统配置组件 ==========
 const Config = {
   template: `
-<div class="config-page">
-  <el-card shadow="hover">
-    <template #header><span class="card-title">线索价值评估模型 - 评分规则</span></template>
+<div class="config-page fade-in-up">
+  <el-card shadow="hover" class="rules-card" style="margin-bottom:24px">
+    <template #header><span style="display:flex;align-items:center;gap:6px"><el-icon><medal /></el-icon>线索价值评估模型 - 评分规则</span></template>
     <el-table :data="scoringRules" border stripe>
       <el-table-column prop="dimension" label="评分维度" width="180" />
       <el-table-column prop="weight" label="权重" width="100" />
@@ -630,22 +677,15 @@ const Config = {
     </el-table>
   </el-card>
 
-  <el-card shadow="hover" style="margin-top: 20px;">
-    <template #header>
-      <div class="card-header-row">
-        <span class="card-title">系统配置</span>
-        <el-button size="small" @click="reloadAll">刷新</el-button>
-      </div>
-    </template>
-    <el-table :data="systemList" border stripe size="small">
+  <el-card shadow="hover" class="config-card">
+    <template #header><div style="display:flex;align-items:center;justify-content:space-between"><span style="display:flex;align-items:center;gap:6px"><el-icon><setting /></el-icon>系统配置</span><el-button size="small" @click="reloadAll"><el-icon><refresh /></el-icon>刷新</el-button></div></template>
+    <el-table :data="systemList" border stripe size="default">
       <el-table-column prop="configKey" label="配置项" width="220" />
       <el-table-column label="当前值" min-width="280">
         <template #default="{ row }">
           <template v-if="row.configKey === 'search.cities'">
-            <div class="city-tags">
-              <el-tag v-for="c in cityList" :key="c.id" size="small" closable
-                      style="margin:2px;cursor:pointer;"
-                      @click="openEditCity(c)" @close="removeCity(c)">{{ c.cityName }}</el-tag>
+            <div class="city-tags-container">
+              <el-tag v-for="c in cityList" :key="c.id" size="small" closable style="cursor:pointer;" effect="plain" @click="openEditCity(c)" @close="removeCity(c)">{{ c.cityName }}</el-tag>
               <el-button size="small" type="primary" plain @click="openAddCity">+ 新增城市</el-button>
             </div>
           </template>
@@ -656,7 +696,7 @@ const Config = {
           </template>
           <template v-else>
             <el-input v-if="editingKey === row.configKey" v-model="editingValue" size="small" />
-            <span v-else>{{ row.configValue }}</span>
+            <span v-else style="color:#64748b">{{ row.configValue }}</span>
           </template>
         </template>
       </el-table-column>
@@ -667,10 +707,10 @@ const Config = {
       <el-table-column label="操作" width="200">
         <template #default="{ row }">
           <template v-if="row.configKey === 'search.cities'">
-            <span style="color:#909399;font-size:12px;">点击标签修改，× 删除</span>
+            <span style="color:#94a3b8;font-size:12px;">点击标签修改，x 删除</span>
           </template>
           <template v-else-if="row.configKey === 'volcengine.analysis-model'">
-            <span style="color:#909399;font-size:12px;">下拉切换即保存</span>
+            <span style="color:#94a3b8;font-size:12px;">下拉切换即保存</span>
           </template>
           <template v-else-if="editingKey === row.configKey">
             <el-button size="small" type="primary" @click="saveSystemConfig(row)">保存</el-button>
@@ -680,12 +720,12 @@ const Config = {
         </template>
       </el-table-column>
     </el-table>
-    <div style="margin-top:12px;color:#909399;font-size:12px;">
-      说明：城市通过省市联动菜单选择；去重阈值/分析模型修改后立即生效；搜索/分析 cron 修改后将自动重新注册定时任务（无需重启）。
+    <div class="config-section-hint">
+      <el-icon style="vertical-align:middle;margin-right:4px" /><info-filled style="vertical-align:middle;margin-right:4px" />
+      城市通过省市联动菜单选择；去重阈值/分析模型修改后立即生效；搜索/分析 cron 修改后将自动重新注册定时任务（无需重启）。
     </div>
   </el-card>
 
-  <!-- 新增/编辑城市对话框 -->
   <el-dialog :title="cityDialogTitle" v-model="cityDialogVisible" width="420px">
     <el-form :model="cityForm" label-width="90px">
       <el-form-item label="所属省市">
@@ -711,149 +751,72 @@ const Config = {
     const { ElMessage, ElMessageBox } = ElementPlus;
 
     const scoringRules = [
-      { dimension: '文件类型分', weight: '40%', detail: '招标公告/采购公告/竞争性磋商公告 → 40分；其他政府文件/通知 → 20分；新闻/行业资讯 → 10分；其他 → 5分', score: '5-40分' },
-      { dimension: '金额规模分', weight: '25%', detail: '1000万以上 → 25分；500万-1000万 → 20分；100万-500万 → 15分；100万以下 → 10分；无法识别 → 5分', score: '5-25分' },
-      { dimension: '时效性分', weight: '20%', detail: '7天内 → 20分；30天内 → 15分；90天内 → 10分；超过90天/无法识别 → 5分', score: '5-20分' },
-      { dimension: '行政区划明确度', weight: '10%', detail: '精确到区县级 → 10分；精确到市级 → 7分；仅省级/无法识别 → 3分', score: '3-10分' },
-      { dimension: '发布主体权威性', weight: '5%', detail: '政府机关/事业单位 → 5分；国有企业 → 4分；其他 → 2分', score: '2-5分' },
+      { dimension: '文件类型分', weight: '40%', detail: '招标公告/采购公告/竞争性磋商公告 -> 40分；其他政府文件/通知 -> 20分；新闻/行业资讯 -> 10分；其他 -> 5分', score: '5-40分' },
+      { dimension: '金额规模分', weight: '25%', detail: '1000万以上 -> 25分；500万-1000万 -> 20分；100万-500万 -> 15分；100万以下 -> 10分；无法识别 -> 5分', score: '5-25分' },
+      { dimension: '时效性分', weight: '20%', detail: '7天内 -> 20分；30天内 -> 15分；90天内 -> 10分；超过90天/无法识别 -> 5分', score: '5-20分' },
+      { dimension: '行政区划明确度', weight: '10%', detail: '精确到区县级 -> 10分；精确到市级 -> 7分；仅省级/无法识别 -> 3分', score: '3-10分' },
+      { dimension: '发布主体权威性', weight: '5%', detail: '政府机关/事业单位 -> 5分；国有企业 -> 4分；其他 -> 2分', score: '2-5分' },
       { dimension: '总分', weight: '100%', detail: '以上五个维度加权求和，总分范围 0-100', score: '0-100分' },
     ];
 
-    async function loadCities() {
-      try { cityList.value = await api.getAllCities(); }
-      catch (e) { ElMessage.error('加载城市失败: ' + e.message); }
-    }
+    async function loadCities() { try { cityList.value = await api.getAllCities(); } catch (e) { ElMessage.error('加载城市失败: ' + e.message); } }
     async function loadSystemConfigs() {
       try {
         let list = await api.getAllSystemConfigs();
-        // 城市配置合并展示：若 search.cities 行不存在（首次启动无城市），注入一行以便用户新增
-        if (!list.some(r => r.configKey === 'search.cities')) {
-          list = list.concat([{ configKey: 'search.cities', configValue: '', description: '搜索抓取的城市列表（省市联动选择）', updatedTime: null }]);
-        }
+        if (!list.some(r => r.configKey === 'search.cities')) { list = list.concat([{ configKey: 'search.cities', configValue: '', description: '搜索抓取的城市列表（省市联动选择）', updatedTime: null }]); }
         systemList.value = list;
         configInfo.value = await api.getConfigInfo();
       } catch (e) { ElMessage.error('加载系统配置失败: ' + e.message); }
     }
-    async function reloadAll() {
-      await Promise.all([loadCities(), loadSystemConfigs()]);
-    }
+    async function reloadAll() { await Promise.all([loadCities(), loadSystemConfigs()]); }
 
-    // 分析模型：配置值以 '|' 分隔多个可用模型，第一个为当前使用模型
     const KEY_ANALYSIS_MODEL = 'volcengine.analysis-model';
-    const analysisModelOptions = computed(() => {
-      const row = systemList.value.find(r => r.configKey === KEY_ANALYSIS_MODEL);
-      if (!row || !row.configValue) return [];
-      return row.configValue.split('|').map(s => s.trim()).filter(Boolean);
-    });
+    const analysisModelOptions = computed(() => { const row = systemList.value.find(r => r.configKey === KEY_ANALYSIS_MODEL); if (!row || !row.configValue) return []; return row.configValue.split('|').map(s => s.trim()).filter(Boolean); });
     const analysisModelSelected = computed({
       get() { return analysisModelOptions.value[0] || ''; },
       async set(m) {
         if (!m) return;
-        // 切换模型：把选中的移到列表首位，重新 join 存回
         const reordered = [m, ...analysisModelOptions.value.filter(x => x !== m)];
-        try {
-          await api.updateSystemConfig(KEY_ANALYSIS_MODEL, reordered.join('|'));
-          ElMessage.success('模型切换成功');
-          await reloadAll();
-        } catch (e) { ElMessage.error(e.message); }
+        try { await api.updateSystemConfig(KEY_ANALYSIS_MODEL, reordered.join('|')); ElMessage.success('模型切换成功'); await reloadAll(); } catch (e) { ElMessage.error(e.message); }
       }
     });
 
-    function openAddCity() {
-      cityDialogTitle.value = '新增城市';
-      cityForm.id = null;
-      cityForm.cityPath = [];
-      cityDialogVisible.value = true;
-    }
-    function openEditCity(row) {
-      cityDialogTitle.value = '修改城市';
-      cityForm.id = row.id;
-      cityForm.cityPath = findCityPath(row.cityName);
-      cityDialogVisible.value = true;
-    }
-    function extractCityName() {
-      const p = cityForm.cityPath;
-      if (!p || p.length === 0) return '';
-      return p[p.length - 1]; // 取最末级城市名作为存储值
-    }
+    function openAddCity() { cityDialogTitle.value = '新增城市'; cityForm.id = null; cityForm.cityPath = []; cityDialogVisible.value = true; }
+    function openEditCity(row) { cityDialogTitle.value = '修改城市'; cityForm.id = row.id; cityForm.cityPath = findCityPath(row.cityName); cityDialogVisible.value = true; }
+    function extractCityName() { const p = cityForm.cityPath; if (!p || p.length === 0) return ''; return p[p.length - 1]; }
     async function submitCity() {
       const cityName = extractCityName().trim();
-      if (!cityName) {
-        ElMessage.warning('请选择城市'); return;
-      }
+      if (!cityName) { ElMessage.warning('请选择城市'); return; }
       citySaving.value = true;
       try {
-        if (cityForm.id) {
-          await api.updateCity(cityForm.id, { cityName });
-          ElMessage.success('修改成功');
-        } else {
-          await api.addCity(cityName);
-          ElMessage.success('新增成功');
-        }
-        cityDialogVisible.value = false;
-        await reloadAll();
+        if (cityForm.id) { await api.updateCity(cityForm.id, { cityName }); ElMessage.success('修改成功'); }
+        else { await api.addCity(cityName); ElMessage.success('新增成功'); }
+        cityDialogVisible.value = false; await reloadAll();
       } catch (e) { ElMessage.error(e.message); }
       finally { citySaving.value = false; }
     }
     async function removeCity(row) {
-      try {
-        await ElMessageBox.confirm('确定删除城市「' + row.cityName + '」？', '提示', { type: 'warning' });
-      } catch { return; }
-      try {
-        await api.deleteCity(row.id);
-        ElMessage.success('删除成功');
-        await reloadAll();
-      } catch (e) { ElMessage.error(e.message); }
+      try { await ElMessageBox.confirm('确定删除城市「' + row.cityName + '」?', '提示', { type: 'warning' }); } catch { return; }
+      try { await api.deleteCity(row.id); ElMessage.success('删除成功'); await reloadAll(); } catch (e) { ElMessage.error(e.message); }
     }
-
-    function openEditSystem(row) {
-      editingKey.value = row.configKey;
-      editingValue.value = row.configValue;
-    }
-    function cancelEditSystem() {
-      editingKey.value = ''; editingValue.value = '';
-    }
+    function openEditSystem(row) { editingKey.value = row.configKey; editingValue.value = row.configValue; }
+    function cancelEditSystem() { editingKey.value = ''; editingValue.value = ''; }
     async function saveSystemConfig(row) {
-      if (!editingValue.value || !editingValue.value.trim()) {
-        ElMessage.warning('配置值不能为空'); return;
-      }
-      try {
-        await api.updateSystemConfig(row.configKey, editingValue.value.trim());
-        ElMessage.success('保存成功');
-        cancelEditSystem();
-        await loadSystemConfigs();
-      } catch (e) { ElMessage.error(e.message); }
+      if (!editingValue.value || !editingValue.value.trim()) { ElMessage.warning('配置值不能为空'); return; }
+      try { await api.updateSystemConfig(row.configKey, editingValue.value.trim()); ElMessage.success('保存成功'); cancelEditSystem(); await loadSystemConfigs(); } catch (e) { ElMessage.error(e.message); }
     }
-
-    // 格式化时间为 yyyy年MM月DD日 HH:mm:ss
     function formatTime(value) {
       if (!value) return '';
       const d = new Date(value);
       if (isNaN(d.getTime())) return String(value);
       const pad = (n) => String(n).padStart(2, '0');
-      return `${d.getFullYear()}年${pad(d.getMonth() + 1)}月${pad(d.getDate())}日 ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      return `${d.getFullYear()}年${pad(d.getMonth()+1)}月${pad(d.getDate())}日 ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
     }
-
-    onMounted(async () => {
-      await reloadAll();
-    });
-
-    return {
-      cityList, systemList, configInfo, scoringRules,
-      provinceCityData: PROVINCE_CITY_DATA,
-      findCityPath,
-      formatTime,
-      analysisModelOptions, analysisModelSelected,
-      cityDialogVisible, cityDialogTitle, cityForm, citySaving,
-      editingKey, editingValue,
-      openAddCity, openEditCity, submitCity, removeCity,
-      openEditSystem, cancelEditSystem, saveSystemConfig,
-      reloadAll,
-    };
+    onMounted(async () => { await reloadAll(); });
+    return { cityList, systemList, configInfo, scoringRules, provinceCityData: PROVINCE_CITY_DATA, findCityPath, formatTime, analysisModelOptions, analysisModelSelected, cityDialogVisible, cityDialogTitle, cityForm, citySaving, editingKey, editingValue, openAddCity, openEditCity, submitCity, removeCity, openEditSystem, cancelEditSystem, saveSystemConfig, reloadAll };
   }
 };
 
-// ========== 路由配置 ==========
 const routes = [
   { path: '/', component: Dashboard },
   { path: '/records', component: RecordList },
@@ -861,23 +824,32 @@ const routes = [
   { path: '/config', component: Config },
 ];
 
-const router = createRouter({
-  history: createWebHashHistory(),
-  routes,
-});
+const router = createRouter({ history: createWebHashHistory(), routes });
 
-// ========== 启动应用 ==========
+const pageTitles = { '/': '仪表盘', '/records': '线索列表', '/config': '系统配置' };
+
 const app = createApp({
-  computed: {
-    currentRoute() { return this.$route.path; }
+  setup() {
+    const currentRoute = ref('/');
+    const currentTime = ref('');
+    const refreshTrigger = ref(0);
+    const pageTitle = computed(() => { refreshTrigger.value; return pageTitles[currentRoute.value] || '仪表盘'; });
+    let timer = null;
+    const updateTime = () => {
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      currentTime.value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
+    const handleRefresh = () => { refreshTrigger.value++; window.dispatchEvent(new CustomEvent('app-refresh')); };
+    router.afterEach((to) => { currentRoute.value = to.path; });
+    onMounted(() => { updateTime(); timer = setInterval(updateTime, 1000); currentRoute.value = window.location.hash.slice(1) || '/'; });
+    onUnmounted(() => { if (timer) clearInterval(timer); });
+    return { currentRoute, currentTime, pageTitle, handleRefresh };
   }
 });
 app.use(router);
 app.use(ElementPlus);
-// 注册图标
-for (const [key, comp] of Object.entries(ElementPlusIconsVue)) {
-  app.component(key, comp);
-}
+for (const [key, comp] of Object.entries(ElementPlusIconsVue)) { app.component(key, comp); }
 app.mount('#app');
 </script>
 </body>
