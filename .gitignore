@@ -22,3 +22,8 @@ target/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
+
+# Misc to ignore
+.claude/
+data/
+*.docx
