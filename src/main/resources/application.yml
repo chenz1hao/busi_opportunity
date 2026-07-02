@@ -1,0 +1,55 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: opportunity-crawler
+
+  datasource:
+    url: jdbc:h2:file:./data/opportunity;MODE=MySQL;AUTO_SERVER=TRUE;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+# 火山引擎配置
+volcengine:
+  # 联网搜索 API Key (豆包搜索Custom版)
+  api-key: cCX1N8NJRISQn8JEjNNy9QqU9C2Jdl89
+  # ARK 大模型 API Key (火山方舟)
+  ark-api-key: ark-db541196-3a02-44be-9fd8-9d5693bea8b2-124c4
+  # 联网搜索接口地址 (豆包搜索Custom版)
+  search-url: https://open.feedcoopapi.com/search_api/web_search
+  # ARK 大模型 API 基础地址 (用于评分分析)
+  ark-base-url: https://ark.cn-beijing.volces.com/api/v3
+  # 评分分析使用的模型（多个模型以 | 分隔，第一个为当前使用）
+  analysis-model: deepseek-v4-flash-260425
+
+# 定时任务配置
+scheduler:
+  # 搜索抓取 cron: 每天 8:00, 12:00, 16:00, 20:00
+  search-cron: "0 0 8,12,16,20 * * ?"
+  # 评分分析 cron: 每天凌晨 2:00
+  analysis-cron: "0 0 2 * * ?"
+
+# 去重配置
+dedup:
+  # 余弦相似度阈值(0-1)
+  threshold: 0.90

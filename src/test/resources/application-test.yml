@@ -1,0 +1,46 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: opportunity-crawler-test
+
+  # 内存数据库，测试隔离
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+
+  # 禁用 schema.sql 自动执行（schema.sql 使用 MySQL 语法 INDEX url(255)，
+  # H2 1.4.199 不支持，测试中改由 JPA ddl-auto:create-drop 从实体类生成表结构）
+  sql:
+    init:
+      mode: never
+
+# 火山引擎配置（测试用占位值，实际调用会被 mock）
+volcengine:
+  api-key: test-search-key
+  ark-api-key: test-ark-key
+  search-url: http://localhost:9999/search_api/web_search
+  ark-base-url: http://localhost:9999/api/v3
+  analysis-model: doubao-test-model
+
+# 定时任务配置
+scheduler:
+  search-cron: "0 0 8,12,16,20 * * ?"
+  analysis-cron: "0 0 2 * * ?"
+
+# 去重配置
+dedup:
+  threshold: 0.90
+
+# 分析批次大小
+analysis:
+  batch-size: 10
