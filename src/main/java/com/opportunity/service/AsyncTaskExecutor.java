@@ -38,6 +38,7 @@ public class AsyncTaskExecutor {
     @Async
     public void executeSearchAsync(List<String> cities) {
         SchedulerLog taskLog = new SchedulerLog();
+        taskLog.setTriggerType("MANUAL");
         taskLog.setTaskName("SEARCH_CRAWL");
         taskLog.setStartTime(LocalDateTime.now());
         taskLog.setStatus("RUNNING");
@@ -75,6 +76,7 @@ public class AsyncTaskExecutor {
     @Async
     public void executeAnalysisAsync() {
         SchedulerLog taskLog = new SchedulerLog();
+        taskLog.setTriggerType("MANUAL");
         taskLog.setTaskName("SCORE_ANALYSIS");
         taskLog.setStartTime(LocalDateTime.now());
         taskLog.setStatus("RUNNING");

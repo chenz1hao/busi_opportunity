@@ -13,6 +13,12 @@ public interface SchedulerLogRepository extends JpaRepository<SchedulerLog, Long
 
     List<SchedulerLog> findTop10ByOrderByStartTimeDesc();
 
+    List<SchedulerLog> findAllByOrderByStartTimeDesc();
+
+    long countByTaskName(String taskName);
+
+    long count();
+
     /** 判断指定任务名是否存在指定状态的记录（用于校验是否有未完成任务） */
     boolean existsByTaskNameAndStatus(String taskName, String status);
 }

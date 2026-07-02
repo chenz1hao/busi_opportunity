@@ -102,6 +102,7 @@ public class OpportunityScheduler {
      */
     public void scheduledSearch() {
         SchedulerLog taskLog = new SchedulerLog();
+        taskLog.setTriggerType("AUTO");
         taskLog.setTaskName("SEARCH_CRAWL");
         taskLog.setStartTime(LocalDateTime.now());
         taskLog.setStatus("RUNNING");
@@ -137,6 +138,7 @@ public class OpportunityScheduler {
      */
     public void scheduledAnalysis() {
         SchedulerLog taskLog = new SchedulerLog();
+        taskLog.setTriggerType("AUTO");
         taskLog.setTaskName("SCORE_ANALYSIS");
         taskLog.setStartTime(LocalDateTime.now());
         taskLog.setStatus("RUNNING");

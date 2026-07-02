@@ -32,6 +32,10 @@ public class SchedulerLog {
     @Column(name = "error_msg", columnDefinition = "TEXT")
     private String errorMsg;
 
+    /** 触发方式：AUTO=定时自动触发，MANUAL=手动触发 */
+    @Column(name = "trigger_type", length = 10)
+    private String triggerType;
+
     @Column(name = "created_time")
     private LocalDateTime createdTime;
 
@@ -66,4 +70,7 @@ public class SchedulerLog {
 
     public LocalDateTime getCreatedTime() { return createdTime; }
     public void setCreatedTime(LocalDateTime createdTime) { this.createdTime = createdTime; }
+
+    public String getTriggerType() { return triggerType; }
+    public void setTriggerType(String triggerType) { this.triggerType = triggerType; }
 }

@@ -322,7 +322,8 @@ const api = {
   getConfigInfo: () => api.get('/api/config/info'),
   getAllSystemConfigs: () => api.get('/api/config/system'),
   updateSystemConfig: (configKey, configValue) => api.put('/api/config/system', { configKey, configValue }),
-  getSchedulerLogs: () => api.get('/api/config/scheduler-logs'),
+  getSchedulerLogs: (params) => api.get('/api/config/scheduler-logs',
+    params ? { page: params.page, size: params.size, taskName: params.taskName } : null),
   getCityStatistics: () => api.get('/api/statistics/by-city'),
   getTypeStatistics: () => api.get('/api/statistics/by-type'),
 };
@@ -407,48 +408,115 @@ const Dashboard = {
   </div>
 
   <el-card shadow="hover" class="log-table-card">
-    <template #header><span><el-icon style="margin-right:6px"><list /></el-icon>调度日志</span></template>
-    <el-table :data="schedulerLogs" stripe size="default" style="width:100%">
-      <el-table-column label="任务名称" width="150">
-        <template #default="{ row }">
-          <el-tag :type="row.taskName === 'SEARCH_CRAWL' ? 'primary' : 'success'" size="small" effect="light">
-            {{ row.taskName === 'SEARCH_CRAWL' ? '搜索抓取' : '评分分析' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="startTime" label="开始时间" width="170" />
-      <el-table-column prop="endTime" label="结束时间" width="170" />
-      <el-table-column label="状态" width="100">
-        <template #default="{ row }">
-          <el-tag :type="row.status === 'SUCCESS' ? 'success' : row.status === 'FAILED' ? 'danger' : 'warning'" size="small" effect="light">
-            {{ row.status === 'SUCCESS' ? '成功' : row.status === 'FAILED' ? '失败' : '运行中' }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="totalCount" label="处理总数" width="100" />
-      <el-table-column prop="newCount" label="新增/分析数" width="120" />
-      <el-table-column prop="errorMsg" label="错误信息" min-width="200" show-overflow-tooltip />
-    </el-table>
+    <template #header>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span><el-icon style="margin-right:6px"><list /></el-icon>调度日志</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <el-select v-model="logFilterTask" placeholder="全部任务" clearable size="small" style="width:140px" @change="handleLogFilterChange">
+            <el-option label="搜索抓取" value="SEARCH_CRAWL" />
+            <el-option label="评分分析" value="SCORE_ANALYSIS" />
+          </el-select>
+          <el-button size="small" circle @click="loadLogs"><el-icon><refresh /></el-icon></el-button>
+        </div>
+      </div>
+    </template>
+    <div v-loading="logsLoading">
+      <el-table :data="schedulerLogs" stripe size="default" style="width:100%">
+        <el-table-column label="任务名称" width="140">
+          <template #default="{ row }">
+            <el-tag :type="row.taskName === 'SEARCH_CRAWL' ? 'primary' : 'success'" size="small" effect="light">
+              {{ row.taskName === 'SEARCH_CRAWL' ? '搜索抓取' : '评分分析' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="触发方式" width="110">
+          <template #default="{ row }">
+            <el-tag v-if="row.triggerType" :type="row.triggerType === 'MANUAL' ? 'warning' : 'info'" size="small" effect="light">
+              <el-icon style="margin-right:3px"><avatar v-if="row.triggerType === 'MANUAL'" /><timer v-else /></el-icon>
+              {{ row.triggerType === 'MANUAL' ? '手动触发' : '自动触发' }}
+            </el-tag>
+            <span v-else style="color:#c0c4cc">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="开始时间" width="160">
+          <template #default="{ row }">
+            <div style="font-size:13px;color:#303133">{{ formatDateTime(row.startTime) }}</div>
+            <div style="font-size:12px;color:#909399">{{ timeAgo(row.startTime) }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column label="结束时间" width="170">
+          <template #default="{ row }">
+            <template v-if="row.endTime">
+              <div style="font-size:13px;color:#303133">{{ formatDateTime(row.endTime) }}</div>
+              <div style="font-size:12px;color:#909399">耗时 {{ calcDuration(row.startTime, row.endTime) }}</div>
+            </template>
+            <span v-else style="color:#c0c4cc">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'SUCCESS' ? 'success' : row.status === 'FAILED' ? 'danger' : 'warning'" size="small" effect="light">
+              {{ row.status === 'SUCCESS' ? '成功' : row.status === 'FAILED' ? '失败' : '运行中' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="totalCount" label="处理总数" width="100" />
+        <el-table-column prop="newCount" label="新增/分析数" width="120" />
+        <el-table-column prop="errorMsg" label="错误信息" min-width="200" show-overflow-tooltip />
+      </el-table>
+      <div class="pagination-row">
+        <el-pagination
+          background
+          v-model:current-page="logPageNum"
+          v-model:page-size="logPageSize"
+          :page-sizes="[10,15,20,50]"
+          :total="logTotal"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="loadLogs"
+          @current-change="loadLogs" />
+      </div>
+    </div>
   </el-card>
 </div>`,
   setup() {
     const { ElMessage } = ElementPlus;
     const stats = ref({});
     const schedulerLogs = ref([]);
+    const logTotal = ref(0);
+    const logPageNum = ref(1);
+    const logPageSize = ref(15);
+    const logFilterTask = ref(null);
+    const logsLoading = ref(false);
     const cityChartRef = ref(null);
     const typeChartRef = ref(null);
     const searchLoading = ref(false);
     const analysisLoading = ref(false);
     let pollTimer = null;
 
-    const loadData = async () => {
-      let statsData, logsData, cityData, typeData;
+    const loadLogs = async () => {
+      logsLoading.value = true;
       try {
-        [statsData, logsData, cityData, typeData] = await Promise.all([
-          api.getStatistics(), api.getSchedulerLogs(), api.getCityStatistics(), api.getTypeStatistics()
+        const params = { page: logPageNum.value - 1, size: logPageSize.value, taskName: logFilterTask.value };
+        const res = await api.getSchedulerLogs(params);
+        schedulerLogs.value = res.content;
+        logTotal.value = res.totalElements;
+      } catch (e) { console.error('加载调度日志失败:', e); }
+      finally { logsLoading.value = false; checkPolling(); }
+    };
+
+    const handleLogFilterChange = () => {
+      logPageNum.value = 1;
+      loadLogs();
+    };
+
+    const loadData = async () => {
+      let statsData, cityData, typeData;
+      try {
+        [statsData, cityData, typeData] = await Promise.all([
+          api.getStatistics(), api.getCityStatistics(), api.getTypeStatistics()
         ]);
         stats.value = statsData;
-        schedulerLogs.value = logsData;
+        await loadLogs();
       } catch (e) {
         console.error('仪表盘 API 加载失败:', e);
         ElMessage.error('加载数据失败: ' + (e && e.message ? e.message : e));
@@ -457,7 +525,6 @@ const Dashboard = {
       await nextTick();
       try { renderCityChart(cityData); } catch (e1) { console.error('城市分布图渲染失败:', e1); }
       try { renderTypeChart(typeData); } catch (e2) { console.error('类型分布图渲染失败:', e2); }
-      checkPolling();
     };
     const checkPolling = () => {
       const hasRunning = schedulerLogs.value.some(l => l.status === 'RUNNING');
@@ -467,10 +534,11 @@ const Dashboard = {
       if (pollTimer) return;
       pollTimer = setInterval(async () => {
         try {
-          const [statsData, logsData, cData, tData] = await Promise.all([
-            api.getStatistics(), api.getSchedulerLogs(), api.getCityStatistics(), api.getTypeStatistics()
+          const [statsData, cData, tData, logsRes] = await Promise.all([
+            api.getStatistics(), api.getCityStatistics(), api.getTypeStatistics(),
+            api.getSchedulerLogs({ page: logPageNum.value - 1, size: logPageSize.value, taskName: logFilterTask.value })
           ]);
-          stats.value = statsData; schedulerLogs.value = logsData;
+          stats.value = statsData; schedulerLogs.value = logsRes.content; logTotal.value = logsRes.totalElements;
           await nextTick();
           try { renderCityChart(cData); } catch (e) {}
           try { renderTypeChart(tData); } catch (e) {}
@@ -479,6 +547,43 @@ const Dashboard = {
       }, 3000);
     };
     const stopPolling = () => { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } };
+
+    // 时间格式化：今天→"今天 14:30"，今年→"01-15 14:30"，跨年→"2024-01-15 14:30"
+    const formatDateTime = (value) => {
+      if (!value) return '-';
+      const d = new Date(value);
+      if (isNaN(d.getTime())) return value;
+      const pad = (n) => String(n).padStart(2, '0');
+      const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      const now = new Date();
+      if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate()) {
+        return `今天 ${time}`;
+      }
+      if (d.getFullYear() === now.getFullYear()) {
+        return `${pad(d.getMonth()+1)}-${pad(d.getDate())} ${time}`;
+      }
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${time}`;
+    };
+    // 相对时间：几分钟前 / 几小时前
+    const timeAgo = (value) => {
+      if (!value) return '';
+      const d = new Date(value);
+      if (isNaN(d.getTime())) return '';
+      const diff = Math.floor((Date.now() - d.getTime()) / 1000);
+      if (diff < 60) return diff + '秒前';
+      if (diff < 3600) return Math.floor(diff / 60) + '分钟前';
+      if (diff < 86400) return Math.floor(diff / 3600) + '小时前';
+      return Math.floor(diff / 86400) + '天前';
+    };
+    // 计算耗时
+    const calcDuration = (start, end) => {
+      if (!start || !end) return '';
+      const diff = Math.floor((new Date(end).getTime() - new Date(start).getTime()) / 1000);
+      if (diff < 0) return '';
+      if (diff < 60) return diff + '秒';
+      if (diff < 3600) return Math.floor(diff / 60) + '分' + (diff % 60) + '秒';
+      return Math.floor(diff / 3600) + '时' + Math.floor((diff % 3600) / 60) + '分';
+    };
 
     const renderCityChart = (data) => {
       if (!cityChartRef.value) return;
@@ -512,24 +617,33 @@ const Dashboard = {
       searchLoading.value = true;
       try {
         const res = await api.triggerSearch();
-        if (res.status === 'error') ElMessage.warning(res.message);
-        else { ElMessage.success(res.message || '搜索任务已下发，请稍后查看'); schedulerLogs.value = await api.getSchedulerLogs(); checkPolling(); }
-      } catch (e) { ElMessage.error('搜索触发失败: ' + e.message); }
-      finally { searchLoading.value = false; }
+        if (res.status === 'error') { ElMessage.warning(res.message); searchLoading.value = false; return; }
+        ElMessage.success(res.message || '搜索任务已下发，请稍后查看');
+        // 等待后端写入 RUNNING 状态的调度日志后再刷新，确保能捕获到执行中任务
+        setTimeout(async () => {
+          await loadLogs();
+          searchLoading.value = false;
+        }, 1200);
+        return;
+      } catch (e) { ElMessage.error('搜索触发失败: ' + e.message); searchLoading.value = false; }
     };
     const handleTriggerAnalysis = async () => {
       analysisLoading.value = true;
       try {
         const res = await api.triggerAnalysis();
-        if (res.status === 'error') ElMessage.warning(res.message);
-        else { ElMessage.success(res.message || '分析任务已下发，请稍后查看'); schedulerLogs.value = await api.getSchedulerLogs(); checkPolling(); }
-      } catch (e) { ElMessage.error('分析触发失败: ' + e.message); }
-      finally { analysisLoading.value = false; }
+        if (res.status === 'error') { ElMessage.warning(res.message); analysisLoading.value = false; return; }
+        ElMessage.success(res.message || '分析任务已下发，请稍后查看');
+        setTimeout(async () => {
+          await loadLogs();
+          analysisLoading.value = false;
+        }, 1200);
+        return;
+      } catch (e) { ElMessage.error('分析触发失败: ' + e.message); analysisLoading.value = false; }
     };
 
     onMounted(loadData);
     onUnmounted(stopPolling);
-    return { stats, schedulerLogs, cityChartRef, typeChartRef, searchLoading, analysisLoading, handleTriggerSearch, handleTriggerAnalysis };
+    return { stats, schedulerLogs, logTotal, logPageNum, logPageSize, logFilterTask, logsLoading, cityChartRef, typeChartRef, searchLoading, analysisLoading, handleTriggerSearch, handleTriggerAnalysis, formatDateTime, timeAgo, calcDuration, loadLogs, handleLogFilterChange };
   }
 };
 
@@ -721,7 +835,7 @@ const Config = {
       </el-table-column>
     </el-table>
     <div class="config-section-hint">
-      <el-icon style="vertical-align:middle;margin-right:4px" /><info-filled style="vertical-align:middle;margin-right:4px" />
+      <el-icon style="vertical-align:middle;margin-right:4px"><info-filled /></el-icon>
       城市通过省市联动菜单选择；去重阈值/分析模型修改后立即生效；搜索/分析 cron 修改后将自动重新注册定时任务（无需重启）。
     </div>
   </el-card>

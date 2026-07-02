@@ -235,8 +235,30 @@ public class OpportunityController {
     }
 
     @GetMapping("/config/scheduler-logs")
-    public ResponseEntity<List<SchedulerLog>> getSchedulerLogs() {
-        return ResponseEntity.ok(schedulerLogRepository.findTop10ByOrderByStartTimeDesc());
+    public ResponseEntity<Map<String, Object>> getSchedulerLogs(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "15") int size,
+            @RequestParam(required = false) String taskName) {
+
+        List<SchedulerLog> allLogs;
+        long total;
+
+        if (taskName != null && !taskName.isEmpty()) {
+            allLogs = schedulerLogRepository.findByTaskNameOrderByStartTimeDesc(taskName);
+        } else {
+            allLogs = schedulerLogRepository.findAllByOrderByStartTimeDesc();
+        }
+        total = allLogs.size();
+
+        // 内存分页
+        int from = page * size;
+        int to = Math.min(from + size, allLogs.size());
+        List<SchedulerLog> pageData = from < allLogs.size() ? allLogs.subList(from, to) : Collections.emptyList();
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("content", pageData);
+        result.put("totalElements", total);
+        return ResponseEntity.ok(result);
     }
 
     // ========== 城市统计 ==========
